@@ -38,3 +38,17 @@
     position: absolute;
     display: none;
 }
+
+/* page CSS */
+
+h1 {
+    font-size: 16px;
+}
+
+h2 {
+    font-size: 14px;
+}
+
+div {
+    margin-top: 10px;
+}

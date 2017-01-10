@@ -69,19 +69,11 @@ function setAnswerSDP() {
     peerConnection.setRemoteDescription(rsd, setRemoteDescriptionSuccess, setRemoteDescriptionFailure);
 }
 
-function sendData(event) {
-    var playFieldOffset = $("#playField").offset();
-    
-    if((event.pageX - playFieldOffset.left) > ($("#playField").width() - $("#mouseCursorFirst").width()) || (event.pageY - playFieldOffset.top) > ($("#playField").height() - $("#mouseCursorFirst").width())) {
-        return;
-    }
-    
+function sendData(data) {
     if(first == true) {
-        $("#mouseCursorFirst").offset({ top: event.pageY, left: event.pageX });    
-        achan.send(JSON.stringify([ event.pageY - playFieldOffset.top, event.pageX - playFieldOffset.left ]));
+        sendChannel.send(data);
     } else {
-        receiveChannel.send(JSON.stringify([ event.pageY - playFieldOffset.top, event.pageX - playFieldOffset.left ]));
-        $("#mouseCursorSecond").offset({ top: event.pageY, left: event.pageX });
+        receiveChannel.send(data);
     }
 }
 
@@ -148,20 +140,20 @@ function createAnswerFailure(data) {
 
 /* Data Channel */
 
-var achan ;
+var sendChannel ;
         
 function createChannel(title) {
-    achan = peerConnection.createDataChannel(title, { ordered: false });
+    sendChannel = peerConnection.createDataChannel(title, { ordered: false });
 
-    //console.log(achan);
+    //console.log(sendChannel);
 
-    achan.onopen = channelOpen;
+    sendChannel.onopen = channelOpen;
 
-    achan.onclose = channelClose;
+    sendChannel.onclose = channelClose;
 
-    achan.onmessage = channelMessage;
+    sendChannel.onmessage = channelMessage;
 
-    achan.onerror = channelError;
+    sendChannel.onerror = channelError;
 }
 
 /**/
@@ -204,15 +196,7 @@ function channelMessage(data) {
     //console.log('channelMessage');
     //console.log(data);
 
-    var playFieldOffset = $("#playField").offset();
-    
-    var obj = JSON.parse(data.data);
-    
-    if(first == true) {
-        $("#mouseCursorSecond").offset({ top: playFieldOffset.top + obj[0], left: playFieldOffset.left + obj[1] });
-    } else {
-        $("#mouseCursorFirst").offset({ top: playFieldOffset.top + obj[0], left: playFieldOffset.left + obj[1] });    
-    }        
+    processingData(data);
 };
     
 function channelError(data) {
@@ -220,14 +204,65 @@ function channelError(data) {
     console.log(data);
 };    
 
-/**/
+/* Game */
 
 function startGame() {
-    $("#playField").mousemove(sendData).show();
+    $("#playField").mousemove(playerPosition).show();
     
     $("#mouseCursorFirst").offset($("#playField").offset()).show();
     $("#mouseCursorSecond").offset($("#playField").offset()).show();
+    
+    if(first == true) {
+        createRedDot();
+    }
 }
 
-/**/
+function playerPosition(event) {
+    var playFieldOffset = $("#playField").offset();
+    playFieldOffset.left = Math.round(playFieldOffset.left);
+    playFieldOffset.top = Math.round(playFieldOffset.top);
 
+    if((event.pageX - playFieldOffset.left) > ($("#playField").width() - $("#mouseCursorFirst").width()) || (event.pageY - playFieldOffset.top) > ($("#playField").height() - $("#mouseCursorFirst").width())) {
+        return;
+    }
+
+    if(first == true) {
+        $("#mouseCursorFirst").offset({ top: event.pageY, left: event.pageX });    
+        
+        sendData([ 1, event.pageY - playFieldOffset.top, event.pageX - playFieldOffset.left ])
+    } else {
+        $("#mouseCursorSecond").offset({ top: event.pageY, left: event.pageX });
+
+        sendData([ 1, event.pageY - playFieldOffset.top, event.pageX - playFieldOffset.left ])
+    }
+}
+
+function processingData(data) {
+    var obj = ((data.data).split(",")).map(function (x) { return parseInt(x, 10) });
+
+    var command = obj[0];
+    obj.shift();
+    
+    switch (command) {
+        case 1:
+            opponentMove(obj);
+            break;
+    }
+}
+
+function opponentMove(obj) {
+    var playFieldOffset = $("#playField").offset();
+    
+    if(first == true) {
+        $("#mouseCursorSecond").offset({ top: playFieldOffset.top + obj[0], left: playFieldOffset.left + obj[1] });
+    } else {
+        $("#mouseCursorFirst").offset({ top: playFieldOffset.top + obj[0], left: playFieldOffset.left + obj[1] });    
+    }        
+}
+
+function createRedDot() {
+    
+}
+
+
+/**/
