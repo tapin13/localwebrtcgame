@@ -24,7 +24,7 @@
 }
 
 #mouseCursorFirst {
-    border: 1px solid red;
+    border: 1px solid maroon;
     width: 30px;
     height: 30px;    
     position: absolute;
@@ -32,10 +32,24 @@
 }
 
 #mouseCursorSecond {
-    border: 1px solid green;
+    border: 1px solid blue;
     width: 30px;
     height: 30px;    
     position: absolute;
+    display: none;
+}
+
+#redDot {
+    border: 1px solid red;
+    background-color: red;
+    border-radius: 50%;
+    width: 25px;
+    height: 25px;
+    position: absolute;
+    display: none;
+}
+
+#score {
     display: none;
 }
 

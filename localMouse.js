@@ -193,8 +193,7 @@ function channelClose(data) {
 };
 
 function channelMessage(data) {
-    //console.log('channelMessage');
-    //console.log(data);
+    //console.log('channelMessage: ', data);
 
     processingData(data);
 };
@@ -212,9 +211,9 @@ function startGame() {
     $("#mouseCursorFirst").offset($("#playField").offset()).show();
     $("#mouseCursorSecond").offset($("#playField").offset()).show();
     
-    if(first == true) {
-        createRedDot();
-    }
+    $("#score").show();
+    
+    createRedDot();
 }
 
 function playerPosition(event) {
@@ -235,6 +234,8 @@ function playerPosition(event) {
 
         sendData([ 1, event.pageY - playFieldOffset.top, event.pageX - playFieldOffset.left ])
     }
+    
+    redDotCached();
 }
 
 function processingData(data) {
@@ -247,6 +248,12 @@ function processingData(data) {
         case 1:
             opponentMove(obj);
             break;
+        case 2:
+            showRedDot(obj);
+            break;
+        case 3:
+            score(obj);
+            break;
     }
 }
 
@@ -258,11 +265,74 @@ function opponentMove(obj) {
     } else {
         $("#mouseCursorFirst").offset({ top: playFieldOffset.top + obj[0], left: playFieldOffset.left + obj[1] });    
     }        
+    
+    redDotCached();
 }
 
 function createRedDot() {
+    if(first == false) {
+        return;
+    }
     
+    var playFieldOffset = $("#playField").offset();
+    
+    var firstPosition = $("#mouseCursorFirst").offset();
+    var secondPosition = $("#mouseCursorSecond").offset();
+    var redDotPosition = { top: 0, left: 0};
+    
+    var minTop = Math.round(playFieldOffset.top);
+    var maxTop = Math.round(playFieldOffset.top) + $("#playField").height() - $("#redDot").height();
+    
+    var minLeft = Math.round(playFieldOffset.left);
+    var maxLeft = Math.round(playFieldOffset.left) + $("#playField").width() - $("#redDot").width();
+    
+    redDotPosition.top = Math.round(Math.random() * (maxTop - minTop) + minTop);
+    redDotPosition.left = Math.round(Math.random() * (maxLeft - minLeft) + minLeft);
+
+    sendData([ 2, redDotPosition.top - playFieldOffset.top, redDotPosition.left - playFieldOffset.left ])
+
+    $("#redDot").offset(redDotPosition).show();
 }
 
+function redDotCached() {
+    if(first == false) {
+        return;
+    }    
+    
+    var firstPosition = $("#mouseCursorFirst").offset();
+    var secondPosition = $("#mouseCursorSecond").offset();
+    var redDotPosition = $("#redDot").offset();
+    
+    if(firstPosition.top <= redDotPosition.top 
+            && (firstPosition.top + $("#mouseCursorFirst").height() - $("#redDot").height()) > redDotPosition.top 
+            && firstPosition.left <= redDotPosition.left
+            && (firstPosition.left + $("#mouseCursorFirst").width() - $("#redDot").width()) > redDotPosition.left
+            ) {
+        $("#scoreFirst").text(parseInt($("#scoreFirst").text(), 10) + 1);
+        sendData([ 3, parseInt($("#scoreFirst").text(), 10), parseInt($("#scoreSecond").text(), 10)]);
+        createRedDot();
+    }
+    
+    if(secondPosition.top <= redDotPosition.top 
+            && (secondPosition.top + $("#mouseCursorFirst").height() - $("#redDot").height()) > redDotPosition.top 
+            && secondPosition.left <= redDotPosition.left
+            && (secondPosition.left + $("#mouseCursorFirst").width() - $("#redDot").width()) > redDotPosition.left
+            ) {
+        $("#scoreSecond").text(parseInt($("#scoreSecond").text(), 10) + 1);
+        sendData([ 3, parseInt($("#scoreFirst").text(), 10), parseInt($("#scoreSecond").text(), 10)]);
+        createRedDot();
+    }
+}
+
+function showRedDot(redDotPosition) {
+    var playFieldOffset = $("#playField").offset();
+    
+    $("#redDot").offset({ top: playFieldOffset.top + redDotPosition[0], left: playFieldOffset.left + redDotPosition[1] }).show();
+}
+
+function score(obj) {
+    $("#scoreFirst").text(obj[1]);
+    $("#scoreSecond").text(obj[0]);
+}
 
 /**/
